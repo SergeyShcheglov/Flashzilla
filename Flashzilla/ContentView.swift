@@ -14,7 +14,7 @@ extension View {
     }
 }
 struct ContentView: View {
-    @State private var cards = Array<Card>(repeating: Card.example, count: 10)
+    @State private var cards = Array(repeating: Card.example, count: 10)
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     
     @State private var timeRemaining = 100
@@ -48,6 +48,15 @@ struct ContentView: View {
                             .stacked(at: index, in: cards.count)
                     }
                 }
+                .allowsHitTesting(timeRemaining > 0)
+                
+                if cards.isEmpty {
+                    Button("Start again", action: resetCards)
+                        .padding()
+                        .background(.white)
+                        .foregroundColor(.black)
+                        .clipShape(Capsule())
+                }
             }
             if differentiateWithoutColor {
                 VStack {
@@ -78,7 +87,9 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
-                isActive = true
+                if cards.isEmpty {
+                    isActive = true
+                }
             } else {
                 isActive = false
             }
@@ -86,6 +97,16 @@ struct ContentView: View {
     }
     func removeCard(at index: Int) {
         cards.remove(at: index)
+        
+        if cards.isEmpty {
+            isActive = false
+        }
+    }
+    
+    func resetCards() {
+        cards = Array(repeating: Card.example, count: 10)
+        timeRemaining = 100
+        isActive = true
     }
 }
 
