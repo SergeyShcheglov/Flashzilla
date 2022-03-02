@@ -10,6 +10,8 @@ import SwiftUI
 struct EditView: View {
     @Environment(\.dismiss) var dismiss
     @State private var cards = [Card]()
+    @State private var promptPlaceholder = "Prompt"
+    @State private var answerPlaceholder = "Answer"
     @State private var newPrompt = ""
     @State private var newAnswer = ""
     
@@ -17,8 +19,8 @@ struct EditView: View {
         NavigationView {
             List {
                 Section("Add new card") {
-                    TextField("Prompt", text: $newPrompt)
-                    TextField("Answer", text: $newAnswer)
+                    TextField(promptPlaceholder, text: $newPrompt)
+                    TextField(answerPlaceholder, text: $newAnswer)
                     Button("Add card", action: addCard)
                 }
                 
@@ -69,6 +71,9 @@ struct EditView: View {
         let card = Card(prompt: trimmedPrompt, answer: trimmedAnswers)
         cards.insert(card, at: 0)
         save()
+        
+        newPrompt = ""
+        newAnswer = ""
     }
     
     func deleteCard(at offset: IndexSet) {
