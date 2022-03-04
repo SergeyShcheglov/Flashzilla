@@ -15,6 +15,9 @@ struct EditView: View {
     @State private var newPrompt = ""
     @State private var newAnswer = ""
     
+    let savePaths = FileManager.getDocumentDirectory.appendingPathComponent("Saved Cards")
+
+    
     var body: some View {
         NavigationView {
             List {
@@ -51,16 +54,30 @@ struct EditView: View {
         dismiss()
     }
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "SavedCards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
+        do {
+            let data = try Data(contentsOf: savePaths)
+            cards = try JSONDecoder().decode([Card].self, from: data)
+        } catch {
+            cards = []
         }
+        
+//        if let data = UserDefaults.standard.data(forKey: "SavedCards") {
+//            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+//                cards = decoded
+//            }
+//        }
     }
     func save() {
-        if let encoded = try? JSONEncoder().encode(cards) {
-            UserDefaults.standard.set(encoded, forKey: "SavedCards")
+        do {
+            let data = try JSONEncoder().encode(cards)
+            try data.write(to: savePaths, options: [.atomic, .completeFileProtection])
+        } catch {
+            print("Couldn't save to documentsDirectory")
         }
+        
+//        if let encoded = try? JSONEncoder().encode(cards) {
+//            UserDefaults.standard.set(encoded, forKey: "SavedCards")
+//        }
     }
     
     func addCard() {

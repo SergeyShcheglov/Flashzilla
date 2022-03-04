@@ -26,6 +26,8 @@ struct ContentView: View {
     
     @State private var showingEditScreen = false
     
+    let savePaths = FileManager.getDocumentDirectory.appendingPathComponent("Saved Cards")
+    
     var body: some View {
         ZStack {
             Image("background")
@@ -141,11 +143,18 @@ struct ContentView: View {
     }
     
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "SavedCards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
+        do {
+            let data = try Data(contentsOf: savePaths)
+            cards = try JSONDecoder().decode([Card].self, from: data)
+        } catch {
+            cards = []
         }
+//        
+//        if let data = UserDefaults.standard.data(forKey: "SavedCards") {
+//            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+//                cards = decoded
+//            }
+//        }
     }
     
     func removeCard(at index: Int, reinsert: Bool) {

@@ -21,7 +21,7 @@ extension Shape {
 struct CardView: View {
     let card: Card
     var removal: ((Bool) -> Void)? = nil
-    
+        
     @State private var feedback = UINotificationFeedbackGenerator()
     
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
