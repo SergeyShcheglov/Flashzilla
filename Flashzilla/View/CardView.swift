@@ -7,17 +7,6 @@
 
 import SwiftUI
 
-extension Shape {
-    func fill(using offset: CGSize) -> some View {
-        if offset.width == 0 {
-            return self.fill(.white)
-        } else if offset.width > 0 {
-            return self.fill(.green)
-        } else {
-            return self.fill(.red)
-        }
-    }
-}
 struct CardView: View {
     let card: Card
     var removal: ((Bool) -> Void)? = nil

@@ -7,26 +7,12 @@
 
 import SwiftUI
 
-extension View {
-    func stacked(at position: Int, in total: Int) -> some View {
-        let offset = Double(total - position)
-        return self.offset(x: 0, y: offset * 10)
-    }
-}
 struct ContentView: View {
-    @State private var cards = [Card]()
+    @ObservedObject var vm = ViewModel()
+    
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @Environment(\.accessibilityVoiceOverEnabled) var voiceOverEnabled
-    
-    @State private var timeRemaining = 100
-    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
     @Environment(\.scenePhase) var scenePhase
-    @State private var isActive = true
-    
-    @State private var showingEditScreen = false
-    
-    let savePaths = FileManager.getDocumentDirectory.appendingPathComponent("Saved Cards")
     
     var body: some View {
         ZStack {
@@ -35,7 +21,7 @@ struct ContentView: View {
                 .ignoresSafeArea()
             
             VStack {
-                Text("Time: \(timeRemaining)")
+                Text("Time: \(vm.timeRemaining)")
                     .font(.largeTitle)
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
@@ -44,21 +30,21 @@ struct ContentView: View {
                     .clipShape(Capsule())
                 
                 ZStack {
-                    ForEach(Array(cards.enumerated()), id:\.element) { card in
+                    ForEach(Array(vm.cards.enumerated()), id:\.element) { card in
                         CardView(card: card.element) { reinsert in
                             withAnimation {
-                                removeCard(at: card.offset, reinsert: reinsert)
+                                vm.removeCard(at: card.offset, reinsert: reinsert)
                             }
                         }
-                        .stacked(at: card.offset, in: cards.count)
-                        .allowsHitTesting(card.offset == cards.count - 1)
-                        .accessibilityHidden(card.offset < cards.count - 1)
+                        .stacked(at: card.offset, in: vm.cards.count)
+                        .allowsHitTesting(card.offset == vm.cards.count - 1)
+                        .accessibilityHidden(card.offset < vm.cards.count - 1)
                     }
                 }
-                .allowsHitTesting(timeRemaining > 0)
+                .allowsHitTesting(vm.timeRemaining > 0)
                 
-                if cards.isEmpty {
-                    Button("Start again", action: resetCards)
+                if vm.cards.isEmpty {
+                    Button("Start again", action: vm.resetCards)
                         .padding()
                         .background(.white)
                         .foregroundColor(.black)
@@ -71,7 +57,7 @@ struct ContentView: View {
                     Spacer()
                     
                     Button {
-                        showingEditScreen = true
+                        vm.showingEditScreen = true
                     } label: {
                         Image(systemName: "plus.circle")
                             .padding()
@@ -92,7 +78,7 @@ struct ContentView: View {
                     HStack {
                         Button {
                             withAnimation {
-                                removeCard(at: cards.count - 1, reinsert: true)
+                                vm.removeCard(at: vm.cards.count - 1, reinsert: true)
                             }
                         } label: {
                             Image(systemName: "xmark.circle")
@@ -106,7 +92,7 @@ struct ContentView: View {
                         
                         Button {
                             withAnimation {
-                                removeCard(at: cards.count - 1, reinsert: false)
+                                vm.removeCard(at: vm.cards.count - 1, reinsert: false)
                             }
                         } label: {
                             Image(systemName: "checkmark.circle")
@@ -123,58 +109,23 @@ struct ContentView: View {
                 }
             }
         }
-        .onReceive(timer) { time in
-            guard isActive else { return }
-            if timeRemaining > 0 {
-                timeRemaining -= 1
+        .onReceive(vm.timer) { time in
+            guard vm.isActive else { return }
+            if vm.timeRemaining > 0 {
+                vm.timeRemaining -= 1
             }
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
-                if cards.isEmpty {
-                    isActive = true
+                if vm.cards.isEmpty {
+                    vm.isActive = true
                 }
             } else {
-                isActive = false
+                vm.isActive = false
             }
         }
-        .sheet(isPresented: $showingEditScreen, onDismiss: resetCards, content: EditView.init)
-        .onAppear(perform: resetCards)
-    }
-    
-    func loadData() {
-        do {
-            let data = try Data(contentsOf: savePaths)
-            cards = try JSONDecoder().decode([Card].self, from: data)
-        } catch {
-            cards = []
-        }
-//        
-//        if let data = UserDefaults.standard.data(forKey: "SavedCards") {
-//            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-//                cards = decoded
-//            }
-//        }
-    }
-    
-    func removeCard(at index: Int, reinsert: Bool) {
-        guard index >= 0 else { return }
-        
-        if reinsert {
-            cards.move(fromOffsets: IndexSet(integer: index), toOffset: 0)
-        } else {
-            cards.remove(at: index)
-        }
-        
-        if cards.isEmpty {
-            isActive = false
-        }
-    }
-    
-    func resetCards() {
-        timeRemaining = 100
-        isActive = true
-        loadData()
+        .sheet(isPresented: $vm.showingEditScreen, onDismiss: vm.resetCards, content: EditView.init)
+        .onAppear(perform: vm.resetCards)
     }
 }
 
